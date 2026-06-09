@@ -294,6 +294,74 @@
             margin-top: 4px;
         }
 
+        .task-card .task-actions {
+            display: flex;
+            gap: 4px;
+            margin-top: 6px;
+        }
+
+        .task-card .task-actions button {
+            font-size: 0.65rem;
+            padding: 2px 6px;
+            border-radius: 4px;
+            border: 1px solid #2a2a4a;
+            background: #16213e;
+            color: #9ca3af;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .task-card .task-actions button:hover {
+            border-color: #a78bfa;
+            color: #a78bfa;
+        }
+
+        .task-create {
+            display: flex;
+            gap: 6px;
+            margin-bottom: 16px;
+        }
+
+        .task-create input {
+            flex: 1;
+            background: #1e293b;
+            border: 1px solid #2a2a4a;
+            border-radius: 6px;
+            padding: 6px 10px;
+            color: #e0e0e0;
+            font-size: 0.8rem;
+            outline: none;
+        }
+
+        .task-create input:focus {
+            border-color: #a78bfa;
+        }
+
+        .task-create select {
+            background: #1e293b;
+            border: 1px solid #2a2a4a;
+            border-radius: 6px;
+            padding: 6px 8px;
+            color: #e0e0e0;
+            font-size: 0.75rem;
+            outline: none;
+        }
+
+        .task-create button {
+            background: #a78bfa;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            padding: 6px 10px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+
+        .task-create button:hover {
+            background: #8b5cf6;
+        }
+
         /* Settings slider */
         .settings-section {
             margin-top: 20px;
@@ -372,16 +440,22 @@
         <!-- Right Panel: Kanban + Settings -->
         <div class="kanban-panel">
             <h2>Task Board</h2>
+            <div class="task-create">
+                <input type="text" id="new-task-title" placeholder="New task...">
+                <select id="new-task-agent">
+                </select>
+                <button onclick="createTask()">+</button>
+            </div>
             <div class="kanban-section">
-                <h3>In Progress</h3>
+                <h3>🔄 In Progress</h3>
                 <div id="tasks-progress"></div>
             </div>
             <div class="kanban-section">
-                <h3>Idle</h3>
+                <h3>💤 Idle</h3>
                 <div id="tasks-idle"></div>
             </div>
             <div class="kanban-section">
-                <h3>Finished</h3>
+                <h3>✅ Finished</h3>
                 <div id="tasks-finished"></div>
             </div>
 
@@ -532,6 +606,12 @@
                     <span class="status-badge status-${a.status}">${a.status}</span>
                 </div>
             `).join('');
+
+            // Update task creation dropdown
+            const select = document.getElementById('new-task-agent');
+            select.innerHTML = agents.map(a => `
+                <option value="${a.id}">${a.name}</option>
+            `).join('');
         }
 
         async function loadGroupMessages() {
@@ -559,16 +639,68 @@
             const finished = data.tasks.filter(t => t.status === 'finished');
 
             document.getElementById('tasks-progress').innerHTML = progress.map(t => `
-                <div class="task-card">${t.title}<div class="task-agent">${getAgentName(t.agent_id)}</div></div>
+                <div class="task-card">
+                    ${t.title}
+                    <div class="task-agent">${getAgentName(t.agent_id)}</div>
+                    <div class="task-actions">
+                        <button onclick="changeTaskStatus(${t.id}, 'idle')">→ Idle</button>
+                        <button onclick="changeTaskStatus(${t.id}, 'finished')">→ Done</button>
+                        <button onclick="deleteTask(${t.id})">✕</button>
+                    </div>
+                </div>
             `).join('') || '<div style="color:#6b7280;font-size:0.8rem;">No tasks</div>';
 
             document.getElementById('tasks-idle').innerHTML = idle.map(t => `
-                <div class="task-card">${t.title}<div class="task-agent">${getAgentName(t.agent_id)}</div></div>
+                <div class="task-card">
+                    ${t.title}
+                    <div class="task-agent">${getAgentName(t.agent_id)}</div>
+                    <div class="task-actions">
+                        <button onclick="changeTaskStatus(${t.id}, 'in_progress')">→ Working</button>
+                        <button onclick="changeTaskStatus(${t.id}, 'finished')">→ Done</button>
+                        <button onclick="deleteTask(${t.id})">✕</button>
+                    </div>
+                </div>
             `).join('') || '<div style="color:#6b7280;font-size:0.8rem;">No tasks</div>';
 
             document.getElementById('tasks-finished').innerHTML = finished.map(t => `
-                <div class="task-card">${t.title}<div class="task-agent">${getAgentName(t.agent_id)}</div></div>
+                <div class="task-card">
+                    ${t.title}
+                    <div class="task-agent">${getAgentName(t.agent_id)}</div>
+                    <div class="task-actions">
+                        <button onclick="changeTaskStatus(${t.id}, 'idle')">→ Reopen</button>
+                        <button onclick="deleteTask(${t.id})">✕</button>
+                    </div>
+                </div>
             `).join('') || '<div style="color:#6b7280;font-size:0.8rem;">No tasks</div>';
+        }
+
+        async function createTask() {
+            const title = document.getElementById('new-task-title').value.trim();
+            const agentId = document.getElementById('new-task-agent').value;
+            if (!title || !agentId) return;
+
+            await fetch('/api/tasks/', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({agent_id: agentId, title: title})
+            });
+
+            document.getElementById('new-task-title').value = '';
+            await loadTasks();
+        }
+
+        async function changeTaskStatus(taskId, status) {
+            await fetch(`/api/tasks/${taskId}`, {
+                method: 'PATCH',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({status: status})
+            });
+            await loadTasks();
+        }
+
+        async function deleteTask(taskId) {
+            await fetch(`/api/tasks/${taskId}`, {method: 'DELETE'});
+            await loadTasks();
         }
 
         async function updateFrequency(value) {
