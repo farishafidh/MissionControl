@@ -26,14 +26,26 @@ async def lifespan(app: FastAPI):
     await init_db()
     print("✅ Database initialized")
 
-    # Register default agents if none exist
+    # Register default agents if none exist, or update names if they do
     agents = await agent_manager.get_all_agents()
     if not agents:
-        print("📝 No agents found. Registering placeholder agents...")
-        await agent_manager.register_agent("agent-1", "Agent 1", "Placeholder personality")
-        await agent_manager.register_agent("agent-2", "Agent 2", "Placeholder personality")
-        await agent_manager.register_agent("agent-3", "Agent 3", "Placeholder personality")
-        print("✅ 3 placeholder agents registered")
+        print("📝 No agents found. Registering agents...")
+        await agent_manager.register_agent("agent-1", "Rin", "Onee-san. Delegator. Affectionate, lightly yandere.")
+        await agent_manager.register_agent("agent-2", "Mei", "Diligent, precise, reliable. Formal-leaning.")
+        await agent_manager.register_agent("agent-3", "Yui", "Cheerful, curious, talkative. The energy of the group.")
+        print("✅ Rin, Mei, and Yui registered")
+    else:
+        # Ensure names are up to date
+        from mission_control.database import get_db
+        db = await get_db()
+        try:
+            await db.execute("UPDATE agents SET name = 'Rin', personality = 'Onee-san. Delegator.' WHERE id = 'agent-1'")
+            await db.execute("UPDATE agents SET name = 'Mei', personality = 'Diligent, precise, reliable.' WHERE id = 'agent-2'")
+            await db.execute("UPDATE agents SET name = 'Yui', personality = 'Cheerful, curious, talkative.' WHERE id = 'agent-3'")
+            await db.commit()
+        finally:
+            await db.close()
+        print("✅ Agent names updated (Rin, Mei, Yui)")
 
     # Start idle chat scheduler
     await idle_scheduler.start()
@@ -127,8 +139,8 @@ def main():
     uvicorn.run(
         "mission_control.main:app",
         host="127.0.0.1",
-        port=8500,
-        reload=True
+        port=8600,
+        reload=False
     )
 
 

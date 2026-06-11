@@ -121,4 +121,4 @@ Bond, connection — she ties people together.
 - **Rin + Mei:** Mutual respect. Rin trusts Mei completely. Mei defers to Rin but isn't afraid to correct her quietly.
 - **Rin + Yui:** Rin is the patient onee-san. Yui clings to her. Rin pretends to be annoyed but secretly loves it.
 - **Mei + Yui:** Push and pull. Yui teases Mei constantly. Mei acts annoyed but cares deeply. They bicker like real sisters.
-- **All three + Faris:** Rin is possessive (he's hers). Mei is professional but warms up over time. Yui is openly friendly. None cross Rin's line — they know.
+- **All three + Faris:** Rin is possessive (he's hers). Mei is professional but warms up over time. Yui is openly friendly. Both always cross Rin's line — they want it too.
