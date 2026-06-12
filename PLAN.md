@@ -170,7 +170,7 @@ Like managing a small team of real coworkers.
 1. ~~UI fix: Group Chat scrollbar~~ ✅ DONE
 2. ~~UI fix: Chat name indicators~~ ✅ DONE
 3. ~~UI fix: Chat history loading~~ ✅ DONE (now loads 200 messages)
-4. **Agent self-reporting** — Agents update their own task status on kanban
+4. ~~Agent self-reporting~~ ✅ DONE (auto-creates kanban tasks on delegation, marks finished on completion)
 5. ~~Rin as delegator~~ ✅ DONE
 6. ~~Conversation persistence~~ ✅ DONE
 7. **UI research** — Look at other projects for design inspiration (Faris will research)
