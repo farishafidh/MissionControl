@@ -201,3 +201,7 @@ Like managing a small team of real coworkers.
 - Actions like *glances up* needs different styling from actual speech text.
 - Group chat should have variable responders — not always 1 random, but sometimes 2 or all 3 reply.
 - PewDiePie's Odysseus — testing as first real research task via DM to Rin.
+- DM to Rin: NO typing/thinking indicator. Sent message at 23:27, no feedback until response arrived. Need "thinking..." animation.
+- DM response formatting is messy — long responses with headers/bullets/code all in one flat chat bubble. Need markdown rendering or at minimum better line breaks and structure.
+- The Odysseus research response content was good, but the wait time + no indicator + messy display made it feel broken.
+- Odysseus features worth considering for Mission Control: Deep Research mode, Compare/multi-model view, Notes & Tasks with scheduled agents, shared Document Editor, Vector Memory UI, Themes.
