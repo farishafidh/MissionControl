@@ -316,6 +316,80 @@
             background: #1a1a3e;
         }
 
+        .typing-indicator {
+            display: none;
+            padding: 8px 16px;
+            font-size: 0.8rem;
+            color: #a78bfa;
+            font-style: italic;
+            animation: blink 1.5s infinite;
+        }
+
+        .typing-indicator.visible {
+            display: block;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+        }
+
+        /* Action text (*like this*) */
+        .action-text {
+            color: #9ca3af;
+            font-style: italic;
+            font-size: 0.85em;
+        }
+
+        /* Markdown rendering */
+        .md-h1 {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #a78bfa;
+            margin: 12px 0 6px 0;
+            border-bottom: 1px solid #2a2a4a;
+            padding-bottom: 4px;
+        }
+
+        .md-h2 {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #c4b5fd;
+            margin: 10px 0 4px 0;
+        }
+
+        .md-h3 {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #ddd6fe;
+            margin: 8px 0 4px 0;
+        }
+
+        .md-bullet {
+            padding-left: 12px;
+            margin: 2px 0;
+        }
+
+        .md-code {
+            background: #0d1117;
+            border: 1px solid #2a2a4a;
+            border-radius: 6px;
+            padding: 8px 12px;
+            font-family: 'Consolas', 'Courier New', monospace;
+            font-size: 0.8rem;
+            overflow-x: auto;
+            margin: 6px 0;
+            white-space: pre-wrap;
+        }
+
+        .md-inline-code {
+            background: #0d1117;
+            border-radius: 3px;
+            padding: 1px 4px;
+            font-family: 'Consolas', 'Courier New', monospace;
+            font-size: 0.85em;
+        }
+
         /* Right Panel — Kanban */
         .kanban-panel {
             background: #16213e;
@@ -497,6 +571,7 @@
                 <div class="chat-tab" data-tab="dm" onclick="switchTab('dm')">DM</div>
             </div>
             <div class="messages" id="messages"></div>
+            <div class="typing-indicator" id="typing-indicator">💭 Thinking...</div>
             <div class="chat-input">
                 <button class="upload-btn" onclick="document.getElementById('file-input').click()" title="Upload file">📎</button>
                 <input type="file" id="file-input" style="display:none" accept=".png,.jpg,.jpeg,.gif,.webp,.bmp,.pdf,.txt,.md,.csv,.docx,.xlsx,.json,.yaml,.yml" onchange="handleFileSelect(event)">
@@ -589,10 +664,12 @@
 
         function handleWSMessage(data) {
             if (data.type === 'group_chat') {
+                hideTyping();
                 if (currentTab === 'group') {
                     data.messages.forEach(msg => appendMessage(msg));
                 }
             } else if (data.type === 'dm_response') {
+                hideTyping();
                 if (currentTab === 'dm' && data.agent_id === selectedAgent) {
                     appendMessage({
                         from_agent: data.agent_id,
@@ -645,6 +722,9 @@
                     content: message,
                     timestamp: new Date().toISOString()
                 });
+
+                // Show typing indicator
+                showTyping(getAgentName(selectedAgent));
             } else if (currentTab === 'group') {
                 // Send to group chat via WebSocket
                 ws.send(JSON.stringify({
@@ -658,9 +738,23 @@
                     content: message,
                     timestamp: new Date().toISOString()
                 });
+
+                // Show typing indicator
+                showTyping('Someone');
             }
 
             input.value = '';
+        }
+
+        function showTyping(name) {
+            const indicator = document.getElementById('typing-indicator');
+            indicator.textContent = `💭 ${name} is thinking...`;
+            indicator.classList.add('visible');
+        }
+
+        function hideTyping() {
+            const indicator = document.getElementById('typing-indicator');
+            indicator.classList.remove('visible');
         }
 
         function switchTab(tab) {
@@ -943,6 +1037,36 @@
             // Files
             rendered = rendered.replace(/\[file:(\/api\/files\/[^\]:]+):([^\]]+)\]/g, 
                 '<a class="file-attachment" href="$1" download="$2">📄 $2</a>');
+
+            // Action text *like this* → italic, lighter color
+            rendered = rendered.replace(/\*([^*]+)\*/g, '<span class="action-text">*$1*</span>');
+
+            // Headers (### Header, ## Header, # Header)
+            rendered = rendered.replace(/^### (.+)$/gm, '<div class="md-h3">$1</div>');
+            rendered = rendered.replace(/^## (.+)$/gm, '<div class="md-h2">$1</div>');
+            rendered = rendered.replace(/^# (.+)$/gm, '<div class="md-h1">$1</div>');
+            rendered = rendered.replace(/^(.+)\n={3,}$/gm, '<div class="md-h1">$1</div>');
+
+            // Bold **text**
+            rendered = rendered.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+
+            // Bullet points (- item)
+            rendered = rendered.replace(/^- (.+)$/gm, '<div class="md-bullet">• $1</div>');
+
+            // Numbered lists (1. item)
+            rendered = rendered.replace(/^\d+\. (.+)$/gm, '<div class="md-bullet">$1</div>');
+
+            // Code blocks (```...```)
+            rendered = rendered.replace(/```([^`]*)```/gs, '<pre class="md-code">$1</pre>');
+
+            // Inline code (`code`)
+            rendered = rendered.replace(/`([^`]+)`/g, '<code class="md-inline-code">$1</code>');
+
+            // Line breaks
+            rendered = rendered.replace(/\n/g, '<br>');
+
+            // Clean up excessive breaks
+            rendered = rendered.replace(/(<br>){3,}/g, '<br><br>');
 
             return rendered;
         }
