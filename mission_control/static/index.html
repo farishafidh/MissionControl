@@ -692,7 +692,7 @@
 
             const name = isUser ? 'You' : (msg.from_name || getAgentName(msg.from_agent) || msg.from_agent);
             const initials = name.substring(0, 2).toUpperCase();
-            const time = msg.timestamp ? new Date(msg.timestamp).toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'}) : '';
+            const time = msg.timestamp ? new Date(msg.timestamp.endsWith('Z') ? msg.timestamp : msg.timestamp + 'Z').toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'}) : '';
 
             div.innerHTML = `
                 <div class="avatar">${initials}</div>
