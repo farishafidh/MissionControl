@@ -249,6 +249,10 @@ class AgentManager:
                 await db.commit()
             finally:
                 await db.close()
+
+            # Broadcast task update to UI
+            from mission_control.api.websocket import ws_manager
+            await ws_manager.broadcast({"type": "task_update"})
             
             # Send task to target agent
             delegation_prompt = f"Rin-nee asked you to do this: {task.strip()}"
@@ -266,6 +270,9 @@ class AgentManager:
                     await db.commit()
                 finally:
                     await db.close()
+                
+                # Broadcast task update to UI
+                await ws_manager.broadcast({"type": "task_update"})
                     
             except Exception as e:
                 delegation_results.append(f"\n\n---\n📋 [{target_name.capitalize()}]: (Could not reach {target_name})")

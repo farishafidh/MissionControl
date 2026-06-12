@@ -678,6 +678,9 @@
                         timestamp: new Date().toISOString()
                     });
                 }
+            } else if (data.type === 'task_update') {
+                loadTasks();
+                loadAgents();
             }
         }
 
