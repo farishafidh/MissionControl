@@ -167,9 +167,9 @@ Like managing a small team of real coworkers.
 - Requires: rooms table in database
 
 ## Next Steps (Prioritized)
-1. **UI fix: Group Chat scrollbar** — Chat area needs its own scroll container; currently scrolling causes other UI to get "submerged"/overlapping. Fix z-index and overflow.
-2. **UI fix: Chat name indicators** — Add sender name above each chat bubble in group chat
-3. **UI fix: Chat history loading** — Show more history (load earlier messages on scroll up, not just last 50)
+1. ~~UI fix: Group Chat scrollbar~~ ✅ DONE
+2. ~~UI fix: Chat name indicators~~ ✅ DONE
+3. ~~UI fix: Chat history loading~~ ✅ DONE (now loads 200 messages)
 4. **Agent self-reporting** — Agents update their own task status on kanban
 5. ~~Rin as delegator~~ ✅ DONE
 6. ~~Conversation persistence~~ ✅ DONE
