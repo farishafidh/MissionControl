@@ -173,16 +173,31 @@ Like managing a small team of real coworkers.
 4. ~~Agent self-reporting~~ ✅ DONE (auto-creates kanban tasks on delegation, marks finished on completion)
 5. ~~Rin as delegator~~ ✅ DONE
 6. ~~Conversation persistence~~ ✅ DONE
-7. **UI research** — Look at other projects for design inspiration (Faris will research)
-8. **Phase 5: Virtual Office** — Room visualization (lowest priority)
+7. ~~Port stabilization~~ ✅ DONE (PORT=8600, configurable constant)
+8. ~~File upload~~ ✅ DONE (images inline, documents as downloads, drag-drop, clipboard paste)
+9. ~~Group chat interaction~~ ✅ DONE (user can send messages, random agent responds)
+10. ~~Notification sounds~~ ✅ DONE (Web Audio API chime on new messages)
+11. **UI restructure** — Move group chat, DM, kanban into sidebar navigation (not all visible at once)
+12. **Action text styling** — Asterisk actions (*glances up*) should look different from speech (italics/lighter color)
+13. **Group chat: variable responders** — Sometimes 1, sometimes 2, sometimes all 3 agents respond (not always just 1 random)
+14. **Idle chat context awareness** — Agents sometimes reference work tasks or playfully spill DM details during idle chat
+15. **End-to-end test** — Verify full system works together (Faris testing Odysseus research via DM to Rin)
+16. **UI research** — Look at other projects for design inspiration (Faris will research)
+17. **Phase 5: Virtual Office** — Room visualization (lowest priority)
 
 ## Notes
 - Start simple, iterate
 - Rin builds it, Faris reviews and gives direction
 - Ideas welcome anytime from both sides
+- Server port: 8600 (was 8500, changed due to zombie processes; 8000 used by Kiro Gateway)
+- python-multipart dependency required for file upload (was missing, caused instant crash)
 
 ## Faris's Notes
 - On the group chat currently there's no indicator who's sending the messages. Adding a name above the chat bubble or something will be good
 - The current UI is ok, but I think I will research other's project of how their UI looks like. But, sending a screenshot through CLI is impossible...
 - The Group Chat (this is the only one that I have checked) need to have something like a scrollbar, because when I scroll to see the chat, the other UI got... uh... submerged above. Then, it would be great to able to see even more earlier chat. A few hours ago, I see the chat from 05.30 PM until 11.00 PM yesterday, but now when I checked again, the chat starts from 00.10 AM until just a while ago.
 - Regarding the Conversation Persistence, is it too hard to make that the idle chat between agents sometimes talk about work that assigned to them or like spilling what I DM'd them (when sisters trying to mess with each other / or just anything really)?
+- I want the group chat, DM, kanban (task board) accessed from sidebar menu, so not everything shows up at once.
+- Actions like *glances up* needs different styling from actual speech text.
+- Group chat should have variable responders — not always 1 random, but sometimes 2 or all 3 reply.
+- PewDiePie's Odysseus — testing as first real research task via DM to Rin.
