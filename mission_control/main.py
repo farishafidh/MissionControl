@@ -18,6 +18,9 @@ from mission_control.api.websocket import ws_manager
 from mission_control.agents import agent_manager
 from mission_control.agents.idle_chat import idle_scheduler
 
+# Server port — change this if needed
+PORT = 8600
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -53,8 +56,8 @@ async def lifespan(app: FastAPI):
     print("✅ Idle chat scheduler started")
 
     print("🟢 Mission Control AI is running!")
-    print("   Dashboard: http://localhost:8500")
-    print("   API docs:  http://localhost:8500/docs")
+    print(f"   Dashboard: http://localhost:{PORT}")
+    print(f"   API docs:  http://localhost:{PORT}/docs")
 
     yield
 
@@ -124,6 +127,57 @@ async def websocket_endpoint(websocket: WebSocket):
                     "response": response
                 })
 
+            elif data.get("type") == "group":
+                # User sends a message to group chat
+                import random
+                message = data.get("message", "")
+
+                # Store user message
+                from mission_control.database import get_db
+                db = await get_db()
+                try:
+                    await db.execute(
+                        "INSERT INTO messages (from_agent, to_agent, chat_type, content) VALUES (?, ?, ?, ?)",
+                        ("user", "group", "group", message)
+                    )
+                    await db.commit()
+                finally:
+                    await db.close()
+
+                # Pick a random agent to respond
+                agents_list = await agent_manager.get_all_agents()
+                if agents_list:
+                    responder = random.choice(agents_list)
+                    from mission_control.agents.manager import AGENT_PROFILES
+                    profile = AGENT_PROFILES.get(responder["id"], "rin")
+                    
+                    # Generate response
+                    group_prompt = f"Faris-kun just said in the group chat: \"{message}\". Respond naturally and briefly (1-3 sentences)."
+                    response = await agent_manager._call_hermes(profile, group_prompt, persist=False)
+
+                    # Store agent response
+                    db = await get_db()
+                    try:
+                        await db.execute(
+                            "INSERT INTO messages (from_agent, to_agent, chat_type, content) VALUES (?, ?, ?, ?)",
+                            (responder["id"], "group", "group", response)
+                        )
+                        await db.commit()
+                    finally:
+                        await db.close()
+
+                    # Broadcast to all clients
+                    await ws_manager.broadcast({
+                        "type": "group_chat",
+                        "messages": [{
+                            "from_agent": responder["id"],
+                            "from_name": responder["name"],
+                            "content": response,
+                            "timestamp": __import__('datetime').datetime.now().isoformat(),
+                            "chat_type": "group"
+                        }]
+                    })
+
     except WebSocketDisconnect:
         ws_manager.disconnect(websocket)
     except Exception:
@@ -141,7 +195,7 @@ def main():
     uvicorn.run(
         "mission_control.main:app",
         host="127.0.0.1",
-        port=8600,
+        port=PORT,
         reload=False
     )
 

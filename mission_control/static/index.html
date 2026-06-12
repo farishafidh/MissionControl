@@ -555,6 +555,7 @@
             ws.onmessage = (event) => {
                 const data = JSON.parse(event.data);
                 handleWSMessage(data);
+                playNotification();
             };
 
             ws.onclose = () => {
@@ -563,6 +564,27 @@
                 // Reconnect after 3 seconds
                 setTimeout(connectWS, 3000);
             };
+        }
+
+        // Notification sound using Web Audio API
+        let audioCtx = null;
+        function playNotification() {
+            try {
+                if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(800, audioCtx.currentTime);
+                osc.frequency.setValueAtTime(600, audioCtx.currentTime + 0.1);
+                gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.3);
+                osc.start(audioCtx.currentTime);
+                osc.stop(audioCtx.currentTime + 0.3);
+            } catch (e) {
+                // Silently fail if audio context not available
+            }
         }
 
         function handleWSMessage(data) {
@@ -614,6 +636,19 @@
                 ws.send(JSON.stringify({
                     type: 'dm',
                     agent_id: selectedAgent,
+                    message: message
+                }));
+
+                // Show user message immediately
+                appendMessage({
+                    from_agent: 'user',
+                    content: message,
+                    timestamp: new Date().toISOString()
+                });
+            } else if (currentTab === 'group') {
+                // Send to group chat via WebSocket
+                ws.send(JSON.stringify({
+                    type: 'group',
                     message: message
                 }));
 
