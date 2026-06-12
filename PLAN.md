@@ -181,9 +181,10 @@ Like managing a small team of real coworkers.
 12. **Action text styling** — Asterisk actions (*glances up*) should look different from speech (italics/lighter color)
 13. **Group chat: variable responders** — Sometimes 1, sometimes 2, sometimes all 3 agents respond (not always just 1 random)
 14. **Idle chat context awareness** — Agents sometimes reference work tasks or playfully spill DM details during idle chat
-15. **End-to-end test** — Verify full system works together (Faris testing Odysseus research via DM to Rin)
-16. **UI research** — Look at other projects for design inspiration (Faris will research)
-17. **Phase 5: Virtual Office** — Room visualization (lowest priority)
+15. **Background task queue** — Agents can accept tasks and work on them independently, posting results when done (currently agents only respond synchronously — they can't "work in the background")
+16. **End-to-end test** — Verify full system works together (Faris testing Odysseus research via DM to Rin)
+17. **UI research** — Look at other projects for design inspiration (Faris will research)
+18. **Phase 5: Virtual Office** — Room visualization (lowest priority)
 
 ## Notes
 - Start simple, iterate
