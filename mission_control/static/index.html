@@ -58,6 +58,7 @@
             display: grid;
             grid-template-columns: 260px 1fr 300px;
             height: calc(100vh - 60px);
+            overflow: hidden;
         }
 
         /* Sidebar — Agent List */
@@ -129,6 +130,8 @@
             display: flex;
             flex-direction: column;
             background: #1a1a2e;
+            overflow: hidden;
+            min-height: 0;
         }
 
         .chat-tabs {
@@ -190,6 +193,18 @@
 
         .message.from-user .avatar {
             background: #4ade80;
+        }
+
+        .message .sender-name {
+            font-size: 0.7rem;
+            font-weight: 600;
+            color: #a78bfa;
+            margin-bottom: 2px;
+        }
+
+        .message.from-user .sender-name {
+            color: #4ade80;
+            text-align: right;
         }
 
         .message .bubble {
@@ -520,13 +535,14 @@
             const div = document.createElement('div');
             div.className = `message ${isUser ? 'from-user' : ''}`;
 
-            const name = isUser ? 'You' : (msg.from_name || msg.from_agent);
+            const name = isUser ? 'You' : (msg.from_name || getAgentName(msg.from_agent) || msg.from_agent);
             const initials = name.substring(0, 2).toUpperCase();
             const time = msg.timestamp ? new Date(msg.timestamp).toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'}) : '';
 
             div.innerHTML = `
                 <div class="avatar">${initials}</div>
                 <div>
+                    <div class="sender-name">${name}</div>
                     <div class="bubble">${msg.content}</div>
                     <div class="timestamp">${time}</div>
                 </div>
@@ -615,7 +631,7 @@
         }
 
         async function loadGroupMessages() {
-            const res = await fetch('/api/messages/group?limit=50');
+            const res = await fetch('/api/messages/group?limit=200');
             const data = await res.json();
             const container = document.getElementById('messages');
             container.innerHTML = '';
@@ -623,7 +639,7 @@
         }
 
         async function loadDMMessages(agentId) {
-            const res = await fetch(`/api/messages/dm/${agentId}?limit=50`);
+            const res = await fetch(`/api/messages/dm/${agentId}?limit=200`);
             const data = await res.json();
             const container = document.getElementById('messages');
             container.innerHTML = '';
