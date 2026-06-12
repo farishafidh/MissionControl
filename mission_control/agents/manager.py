@@ -237,20 +237,56 @@ class AgentManager:
             # Update target agent status
             await self.update_status(target_id, "working")
             
+            # Auto-create a kanban task
+            task_title = task.strip()[:80]  # Truncate for display
+            db = await get_db()
+            try:
+                cursor = await db.execute(
+                    "INSERT INTO tasks (agent_id, title, description, status) VALUES (?, ?, ?, ?)",
+                    (target_id, task_title, task.strip(), "in_progress")
+                )
+                task_id = cursor.lastrowid
+                await db.commit()
+            finally:
+                await db.close()
+            
             # Send task to target agent
             delegation_prompt = f"Rin-nee asked you to do this: {task.strip()}"
             try:
                 result = await self._call_hermes(target_profile, delegation_prompt)
                 delegation_results.append(f"\n\n---\n📋 [{target_name.capitalize()}]: {result}")
+                
+                # Mark task as finished
+                db = await get_db()
+                try:
+                    await db.execute(
+                        "UPDATE tasks SET status = 'finished', updated_at = CURRENT_TIMESTAMP WHERE id = ?",
+                        (task_id,)
+                    )
+                    await db.commit()
+                finally:
+                    await db.close()
+                    
             except Exception as e:
                 delegation_results.append(f"\n\n---\n📋 [{target_name.capitalize()}]: (Could not reach {target_name})")
+                
+                # Mark task as idle (failed)
+                db = await get_db()
+                try:
+                    await db.execute(
+                        "UPDATE tasks SET status = 'idle', updated_at = CURRENT_TIMESTAMP WHERE id = ?",
+                        (task_id,)
+                    )
+                    await db.commit()
+                finally:
+                    await db.close()
             
             # Store delegation message in group chat
             db = await get_db()
             try:
                 await db.execute(
                     "INSERT INTO messages (from_agent, to_agent, chat_type, content) VALUES (?, ?, ?, ?)",
-                    (target_id, "group", "group", f"Rin-nee asked me to: {task.strip()}")
+                    (target_id, "group", "group", f"Rin-nee asked me to: {task_title}")
                 )
                 await db.commit()
             finally:
