@@ -265,6 +265,57 @@
             background: #8b5cf6;
         }
 
+        .upload-btn {
+            background: #1e293b;
+            border: 1px solid #2a2a4a;
+            border-radius: 8px;
+            padding: 10px 12px;
+            cursor: pointer;
+            font-size: 1.1rem;
+            transition: all 0.2s;
+        }
+
+        .upload-btn:hover {
+            border-color: #a78bfa;
+            background: #232946;
+        }
+
+        .message .bubble img {
+            max-width: 100%;
+            max-height: 300px;
+            border-radius: 8px;
+            margin-top: 6px;
+            cursor: pointer;
+        }
+
+        .message .bubble img:hover {
+            opacity: 0.9;
+        }
+
+        .message .bubble .file-attachment {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: #16213e;
+            border: 1px solid #2a2a4a;
+            border-radius: 6px;
+            padding: 8px 12px;
+            margin-top: 6px;
+            text-decoration: none;
+            color: #a78bfa;
+            font-size: 0.8rem;
+            transition: border-color 0.2s;
+        }
+
+        .message .bubble .file-attachment:hover {
+            border-color: #a78bfa;
+        }
+
+        .chat-area.drag-over {
+            border: 2px dashed #a78bfa;
+            background: #1a1a3e;
+        }
+
         /* Right Panel — Kanban */
         .kanban-panel {
             background: #16213e;
@@ -447,7 +498,9 @@
             </div>
             <div class="messages" id="messages"></div>
             <div class="chat-input">
-                <input type="text" id="msg-input" placeholder="Type a message..." onkeydown="if(event.key==='Enter')sendMessage()">
+                <button class="upload-btn" onclick="document.getElementById('file-input').click()" title="Upload file">📎</button>
+                <input type="file" id="file-input" style="display:none" accept=".png,.jpg,.jpeg,.gif,.webp,.bmp,.pdf,.txt,.md,.csv,.docx,.xlsx,.json,.yaml,.yml" onchange="handleFileSelect(event)">
+                <input type="text" id="msg-input" placeholder="Type a message... (paste images with Ctrl+V)" onkeydown="if(event.key==='Enter')sendMessage()">
                 <button onclick="sendMessage()">Send</button>
             </div>
         </div>
@@ -543,7 +596,7 @@
                 <div class="avatar">${initials}</div>
                 <div>
                     <div class="sender-name">${name}</div>
-                    <div class="bubble">${msg.content}</div>
+                    <div class="bubble">${renderContent(msg.content)}</div>
                     <div class="timestamp">${time}</div>
                 </div>
             `;
@@ -749,7 +802,115 @@
                 await loadAgents();
                 await loadTasks();
             }, 30000);
+
+            // Drag and drop on chat area
+            const chatArea = document.querySelector('.chat-area');
+            chatArea.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                chatArea.classList.add('drag-over');
+            });
+            chatArea.addEventListener('dragleave', () => {
+                chatArea.classList.remove('drag-over');
+            });
+            chatArea.addEventListener('drop', (e) => {
+                e.preventDefault();
+                chatArea.classList.remove('drag-over');
+                if (e.dataTransfer.files.length > 0) {
+                    uploadAndSend(e.dataTransfer.files[0]);
+                }
+            });
+
+            // Paste from clipboard
+            document.addEventListener('paste', (e) => {
+                const items = e.clipboardData.items;
+                for (let item of items) {
+                    if (item.type.startsWith('image/')) {
+                        e.preventDefault();
+                        const file = item.getAsFile();
+                        uploadAndSend(file);
+                        break;
+                    }
+                }
+            });
         };
+
+        // File handling
+        function handleFileSelect(event) {
+            const file = event.target.files[0];
+            if (file) {
+                uploadAndSend(file);
+                event.target.value = '';  // Reset input
+            }
+        }
+
+        async function uploadAndSend(file) {
+            const formData = new FormData();
+            formData.append('file', file);
+
+            try {
+                const res = await fetch('/api/files/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!res.ok) {
+                    const err = await res.json();
+                    alert(err.detail || 'Upload failed');
+                    return;
+                }
+
+                const data = await res.json();
+                
+                // Send as a message with file attachment
+                const fileMsg = data.file_type === 'image' 
+                    ? `[image:${data.url}:${data.original_name}]`
+                    : `[file:${data.url}:${data.original_name}]`;
+
+                if (currentTab === 'dm' && selectedAgent) {
+                    ws.send(JSON.stringify({
+                        type: 'dm',
+                        agent_id: selectedAgent,
+                        message: fileMsg
+                    }));
+
+                    appendMessage({
+                        from_agent: 'user',
+                        content: fileMsg,
+                        timestamp: new Date().toISOString()
+                    });
+                } else if (currentTab === 'group') {
+                    // Store in group chat via API
+                    await fetch('/api/messages/group', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({from_agent: 'user', content: fileMsg})
+                    });
+
+                    appendMessage({
+                        from_agent: 'user',
+                        content: fileMsg,
+                        timestamp: new Date().toISOString()
+                    });
+                }
+            } catch (err) {
+                alert('Upload failed: ' + err.message);
+            }
+        }
+
+        function renderContent(content) {
+            // Parse [image:url:name] and [file:url:name] tags
+            let rendered = content;
+
+            // Images
+            rendered = rendered.replace(/\[image:(\/api\/files\/[^\]:]+):([^\]]+)\]/g, 
+                '<img src="$1" alt="$2" title="$2" onclick="window.open(\'$1\', \'_blank\')">');
+
+            // Files
+            rendered = rendered.replace(/\[file:(\/api\/files\/[^\]:]+):([^\]]+)\]/g, 
+                '<a class="file-attachment" href="$1" download="$2">📄 $2</a>');
+
+            return rendered;
+        }
     </script>
 </body>
 </html>

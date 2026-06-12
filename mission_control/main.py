@@ -13,6 +13,7 @@ from mission_control.api.agents import router as agents_router
 from mission_control.api.tasks import router as tasks_router
 from mission_control.api.messages import router as messages_router
 from mission_control.api.settings import router as settings_router
+from mission_control.api.files import router as files_router
 from mission_control.api.websocket import ws_manager
 from mission_control.agents import agent_manager
 from mission_control.agents.idle_chat import idle_scheduler
@@ -84,6 +85,7 @@ app.include_router(agents_router)
 app.include_router(tasks_router)
 app.include_router(messages_router)
 app.include_router(settings_router)
+app.include_router(files_router)
 
 
 # Health check

@@ -10,7 +10,7 @@ router = APIRouter(prefix="/api/messages", tags=["messages"])
 
 
 @router.get("/group")
-async def get_group_messages(limit: int = 50):
+async def get_group_messages(limit: int = 200):
     """Get recent group chat messages (agent-to-agent)."""
     db = await get_db()
     try:
@@ -20,6 +20,26 @@ async def get_group_messages(limit: int = 50):
         )
         rows = await cursor.fetchall()
         return {"messages": [dict(row) for row in reversed(rows)]}
+    finally:
+        await db.close()
+
+
+class GroupMessageCreate(BaseModel):
+    from_agent: str
+    content: str
+
+
+@router.post("/group")
+async def post_group_message(msg: GroupMessageCreate):
+    """Post a message to group chat (for user file uploads etc.)."""
+    db = await get_db()
+    try:
+        await db.execute(
+            "INSERT INTO messages (from_agent, to_agent, chat_type, content) VALUES (?, ?, ?, ?)",
+            (msg.from_agent, "group", "group", msg.content)
+        )
+        await db.commit()
+        return {"status": "sent"}
     finally:
         await db.close()
 
