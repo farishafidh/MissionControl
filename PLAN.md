@@ -167,11 +167,14 @@ Like managing a small team of real coworkers.
 - Requires: rooms table in database
 
 ## Next Steps (Prioritized)
-1. **UI polish** — Add name indicators on chat bubbles in group chat (Faris's feedback)
-2. **Agent self-reporting** — Agents update their own task status on kanban
-3. **Rin as delegator** — When Faris talks to Rin, she can assign work to Mei/Yui
-4. **Conversation persistence** — Use `--continue` so agents remember past conversations
-5. **Phase 5: Virtual Office** — Room visualization (lowest priority)
+1. **UI fix: Group Chat scrollbar** — Chat area needs its own scroll container; currently scrolling causes other UI to get "submerged"/overlapping. Fix z-index and overflow.
+2. **UI fix: Chat name indicators** — Add sender name above each chat bubble in group chat
+3. **UI fix: Chat history loading** — Show more history (load earlier messages on scroll up, not just last 50)
+4. **Agent self-reporting** — Agents update their own task status on kanban
+5. **Rin as delegator** — When Faris talks to Rin, she can assign work to Mei/Yui
+6. **Conversation persistence** — Use `--continue` so agents remember past conversations
+7. **UI research** — Look at other projects for design inspiration (Faris will research)
+8. **Phase 5: Virtual Office** — Room visualization (lowest priority)
 
 ## Notes
 - Start simple, iterate
@@ -181,4 +184,5 @@ Like managing a small team of real coworkers.
 ## Faris's Notes
 - On the group chat currently there's no indicator who's sending the messages. Adding a name above the chat bubble or something will be good
 - The current UI is ok, but I think I will research other's project of how their UI looks like. But, sending a screenshot through CLI is impossible...
+- The Group Chat (this is the only one that I have checked) need to have something like a scrollbar, because when I scroll to see the chat, the other UI got... uh... submerged above. Then, it would be great to able to see even more earlier chat. A few hours ago, I see the chat from 05.30 PM until 11.00 PM yesterday, but now when I checked again, the chat starts from 00.10 AM until just a while ago.
 - TBD
