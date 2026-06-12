@@ -200,13 +200,24 @@ class AgentManager:
 
         return response
 
-    async def _call_hermes(self, profile: str, message: str) -> str:
-        """Call Hermes CLI with a specific profile and return the response."""
+    async def _call_hermes(self, profile: str, message: str, persist: bool = True) -> str:
+        """Call Hermes CLI with a specific profile and return the response.
+        
+        Args:
+            profile: Hermes profile name
+            message: Message to send
+            persist: If True, uses --continue to maintain conversation history.
+                     If False, starts a fresh session (for idle chat).
+        """
         hermes_path = os.path.join(
             os.path.expanduser("~"), "AppData", "Local", "hermes",
             "hermes-agent", "venv", "Scripts", "hermes.exe"
         )
-        cmd = [hermes_path, "chat", "-q", message, "-p", profile]
+        
+        if persist:
+            cmd = [hermes_path, "chat", "-c", "-q", message, "-p", profile]
+        else:
+            cmd = [hermes_path, "chat", "-q", message, "-p", profile]
 
         # Use subprocess.run in a thread — asyncio subprocess has issues on Windows with uvicorn
         loop = asyncio.get_event_loop()
@@ -228,7 +239,11 @@ class AgentManager:
             return f"(Error: {type(e).__name__}: {str(e)})"
 
     async def generate_idle_chat(self, agent_id: str, context: str = "") -> str:
-        """Generate an idle chat message from an agent."""
+        """Generate an idle chat message from an agent.
+        
+        Uses persist=False so idle chatter doesn't pollute the agent's
+        main conversation history with the user.
+        """
         agent = await self.get_agent(agent_id)
         if not agent:
             return ""
@@ -237,7 +252,7 @@ class AgentManager:
         prompt = f"You're hanging out in the office with your sisters. Say something casual — could be about work, a random thought, or just chatting. Keep it short (1-2 sentences). Context: {context}" if context else "You're hanging out in the office with your sisters. Say something casual — could be about work, a random thought, or just chatting. Keep it short (1-2 sentences)."
 
         try:
-            return await self._call_hermes(profile, prompt)
+            return await self._call_hermes(profile, prompt, persist=False)
         except Exception:
             return ""
 
