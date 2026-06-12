@@ -171,8 +171,8 @@ Like managing a small team of real coworkers.
 2. **UI fix: Chat name indicators** — Add sender name above each chat bubble in group chat
 3. **UI fix: Chat history loading** — Show more history (load earlier messages on scroll up, not just last 50)
 4. **Agent self-reporting** — Agents update their own task status on kanban
-5. **Rin as delegator** — When Faris talks to Rin, she can assign work to Mei/Yui
-6. **Conversation persistence** — Use `--continue` so agents remember past conversations
+5. ~~Rin as delegator~~ ✅ DONE
+6. ~~Conversation persistence~~ ✅ DONE
 7. **UI research** — Look at other projects for design inspiration (Faris will research)
 8. **Phase 5: Virtual Office** — Room visualization (lowest priority)
 
@@ -185,4 +185,4 @@ Like managing a small team of real coworkers.
 - On the group chat currently there's no indicator who's sending the messages. Adding a name above the chat bubble or something will be good
 - The current UI is ok, but I think I will research other's project of how their UI looks like. But, sending a screenshot through CLI is impossible...
 - The Group Chat (this is the only one that I have checked) need to have something like a scrollbar, because when I scroll to see the chat, the other UI got... uh... submerged above. Then, it would be great to able to see even more earlier chat. A few hours ago, I see the chat from 05.30 PM until 11.00 PM yesterday, but now when I checked again, the chat starts from 00.10 AM until just a while ago.
-- TBD
+- Regarding the Conversation Persistence, is it too hard to make that the idle chat between agents sometimes talk about work that assigned to them or like spilling what I DM'd them (when sisters trying to mess with each other / or just anything really)?

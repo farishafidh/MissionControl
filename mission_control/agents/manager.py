@@ -12,7 +12,7 @@ from mission_control.database import get_db
 
 # Map agent IDs to Hermes profile names
 AGENT_PROFILES = {
-    "agent-1": "default",  # Rin
+    "agent-1": "rin",
     "agent-2": "mei",
     "agent-3": "yui",
 }
@@ -155,12 +155,16 @@ class AgentManager:
             await db.close()
 
     async def send_message_to_agent(self, agent_id: str, message: str) -> str:
-        """Send a message to an agent via its Hermes profile and get a response."""
+        """Send a message to an agent via its Hermes profile and get a response.
+        
+        If the agent is Rin (agent-1) and her response contains delegation blocks,
+        those are parsed and routed to the appropriate sister agents.
+        """
         agent = await self.get_agent(agent_id)
         if not agent:
             return f"Agent {agent_id} not found."
 
-        profile = AGENT_PROFILES.get(agent_id, "default")
+        profile = AGENT_PROFILES.get(agent_id, "rin")
 
         # Update status to chatting
         await self.update_status(agent_id, "chatting")
@@ -195,10 +199,68 @@ class AgentManager:
         finally:
             await db.close()
 
+        # If this is Rin, check for delegation blocks
+        if agent_id == "agent-1":
+            response = await self._handle_delegation(response)
+
         # Update status back to idle
         await self.update_status(agent_id, "idle")
 
         return response
+
+    async def _handle_delegation(self, response: str) -> str:
+        """Parse delegation blocks from Rin's response and route to sisters.
+        
+        Format: [DELEGATE:mei]task here[/DELEGATE]
+                [DELEGATE:yui]task here[/DELEGATE]
+        """
+        import re as regex
+        
+        delegation_pattern = regex.compile(
+            r'\[DELEGATE:(mei|yui)\](.*?)\[/DELEGATE\]',
+            regex.DOTALL
+        )
+        
+        matches = delegation_pattern.findall(response)
+        if not matches:
+            return response
+
+        # Remove delegation blocks from the visible response
+        clean_response = delegation_pattern.sub('', response).strip()
+
+        # Process each delegation
+        delegation_results = []
+        for target_name, task in matches:
+            target_id = "agent-2" if target_name == "mei" else "agent-3"
+            target_profile = AGENT_PROFILES[target_id]
+            
+            # Update target agent status
+            await self.update_status(target_id, "working")
+            
+            # Send task to target agent
+            delegation_prompt = f"Rin-nee asked you to do this: {task.strip()}"
+            try:
+                result = await self._call_hermes(target_profile, delegation_prompt)
+                delegation_results.append(f"\n\n---\n📋 [{target_name.capitalize()}]: {result}")
+            except Exception as e:
+                delegation_results.append(f"\n\n---\n📋 [{target_name.capitalize()}]: (Could not reach {target_name})")
+            
+            # Store delegation message in group chat
+            db = await get_db()
+            try:
+                await db.execute(
+                    "INSERT INTO messages (from_agent, to_agent, chat_type, content) VALUES (?, ?, ?, ?)",
+                    (target_id, "group", "group", f"Rin-nee asked me to: {task.strip()}")
+                )
+                await db.commit()
+            finally:
+                await db.close()
+            
+            # Update status back
+            await self.update_status(target_id, "idle")
+
+        # Combine Rin's response with delegation results
+        return clean_response + ''.join(delegation_results)
 
     async def _call_hermes(self, profile: str, message: str, persist: bool = True) -> str:
         """Call Hermes CLI with a specific profile and return the response.
